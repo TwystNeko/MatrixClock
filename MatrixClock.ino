@@ -319,28 +319,7 @@ for (i=0;i<12;i++)
     }
 
   }
-  void drawWu(int hue)
-  {
-     int i;
 
-    // Backface
-    EdgePoint *e;
-    for (i=0;i<12;i++)
-    {  
-      e = edge+i;
-      if (!e->visible)
-        wuLine(screen[e->x].x,screen[e->x].y,screen[e->y].x,screen[e->y].y,CHSV(hue,255,128));  
-    }
-for (i=0;i<12;i++)
-    {  
-      e = edge+i;
-      if (e->visible)
-      {
-        wuLine(screen[e->x].x,screen[e->x].y,screen[e->y].x,screen[e->y].y,CHSV(hue,255,255));
-      }
-    }
-
-  }
 };
 
 Cube cube;
@@ -547,7 +526,7 @@ void drawCurrentMode() {
         drawCube();
         break;
       case 3:
-        drawCube2();
+
         break;
     }
     if(showClock) { 
@@ -735,98 +714,4 @@ void drawCube() {
   cubeHue++;
 
   nextFrame = millis() + 10;
-}
-void drawCube2() { 
-
-  if(initMode) {
-    cube.make(cubeWidth);
-    initMode = false;
-  }
-  pSmartMatrix->fillScreen(COLOR_BLACK);
-  Angx+= AngxSpeed;
-  Angy+= AngySpeed;
-  if(Angx>=TWO_PI) Angx-=TWO_PI;
-  if(Angy>=TWO_PI) Angy-=TWO_PI;
-  cube.rotate(Angx,Angy);
-  cube.drawWu(cubeHue);
-  cubeHue++;
-
-  nextFrame = millis() + 10;
-}
-
-#define ipart_(X) ((int)(X))
-#define round_(X) ((int)((double)(X))+0.5)
-#define fpart_(X) (((double)(X)) - (double)ipart_(X))
-#define rfpart_(X) (1.0 - fpart_(X))
-#define swap_(a,b) do { __typeof__(a) tmp; tmp = a; a = b; b = tmp; } while(0)
-
-void wuPlot(uint8_t x, uint8_t y, float fade, CHSV color) { 
-  // fade is how bright it should be - ie, .75 = 75% bright. So map that
-  fade = constrain(fade,0,1);
-  int f = map(fade,0,1,0,255);
-  leds[XY(x,y)] = color;
-  leds[XY(x,y)] %= f;
-}
-void wuLine(uint8_t x1, uint8_t y1, uint8_t x2, uint8_t y2, CHSV color) { 
-  double dx = (double)x2 - (double)x1;
-  double dy = (double)y1 - (double)y1;
-  if( fabs(dx) > fabs(dy)) {
-    if(x2 < x1) { 
-      swap_(x1, x2);
-      swap_(y1, y2);
-    }
-    double gradient = dy/dx;
-    double xend = round_(x1);
-    double yend = y1 + gradient*(xend - x1);
-    double xgap = rfpart_(x1 + 0.5);
-    int xpx11 = xend;
-    int ypx11 = ipart_(yend);
-    wuPlot(xpx11,ypx11,rfpart_(yend)*xgap,color);
-    wuPlot(xpx11,ypx11+1,fpart_(yend)*xgap,color);
-    double intery = yend+gradient;
-
-    xend = round_(x2);
-    yend = y2+gradient*(xend - x2);
-    xgap = fpart_(x2+0.5);
-    int xpx12 = xend;
-    int ypx12 = ipart_(yend);
-    wuPlot(xpx12,ypx12,rfpart_(yend)*xgap,color);
-    wuPlot(xpx12,ypx12+1,fpart_(yend)*xgap,color);
-
-    int x;
-    for(x = xpx11+1; x<= (xpx12-1); x++) {
-      wuPlot(x,ipart_(intery), rfpart_(intery),color);
-      wuPlot(x,ipart_(intery)+1, fpart_(intery),color);
-      intery+= gradient;
-    }
-  } else { 
-if(y2 < y1) { 
-      swap_(x1, x2);
-      swap_(y1, y2);
-    }
-    double gradient = dx/dy;
-    double yend = round_(y1);
-    double xend = x1 + gradient*(yend - y1);
-    double ygap = rfpart_(y1 + 0.5);
-    int ypx11 = yend;
-    int xpx11 = ipart_(xend);
-    wuPlot(xpx11,ypx11,rfpart_(xend)*ygap,color);
-    wuPlot(xpx11,ypx11+1,fpart_(xend)*ygap,color);
-    double interx = xend+gradient;
-
-    yend = round_(y2);
-    xend = x2+gradient*(yend - y2);
-    ygap = fpart_(y2+0.5);
-    int ypx12 = yend;
-    int xpx12 = ipart_(xend);
-    wuPlot(xpx12,ypx12,rfpart_(xend)*ygap,color);
-    wuPlot(xpx12,ypx12+1,fpart_(xend)*ygap,color);
-
-    int y;
-    for(y = ypx11+1; y<= (ypx12-1); y++) {
-      wuPlot(ipart_(interx),y, rfpart_(interx),color);
-      wuPlot(ipart_(interx)+1,y, fpart_(interx),color);
-      interx+= gradient;
-    }
-  }
 }
