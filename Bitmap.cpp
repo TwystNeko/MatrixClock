@@ -1,6 +1,13 @@
 #include "Bitmap.h"
+/*
+// Usage:
+	Bitmap bmp(kMatrixWidth, kMatrixHeight, &sd, &file, leds);
+	bmp.Draw("path/filename.bmp",width,height);
 
-Bitmap::Bitmap(SdFat *sd, SdFile *file, CRGB leds[]) {
+*/
+Bitmap::Bitmap(int width, int height, SdFat *sd, SdFile *file, CRGB leds[]) {
+	this->width = width;
+	this->height = height;
 	this->sd = sd;
 	this->file = file;
 	this->leds = leds;
@@ -21,7 +28,7 @@ void Bitmap::Draw(char *filename, uint8_t x, uint8_t y) {
   //  uint8_t  r, g, b;
   uint32_t pos = 0, startTime = millis();
 
-  if((x >= BM_PIXEL_X) || (y >= BM_PIXEL_Y)) return;
+  if((x >= width) || (y >= height)) return;
 
   // Open requested file on SD card
   file->open(filename, O_READ);
@@ -58,8 +65,8 @@ void Bitmap::Draw(char *filename, uint8_t x, uint8_t y) {
         w = bmpWidth;
         h = bmpHeight;
 
-        if((x+w-1) >= BM_PIXEL_X)  w = BM_PIXEL_X  - x;
-        if((y+h-1) >= BM_PIXEL_Y) h = BM_PIXEL_Y - y;
+        if((x+w-1) >= width)  w = width  - x;
+        if((y+h-1) >= height) h = height - y;
 
         for (row=0; row<h; row++) { // For each scanline...
           //          tft.goTo(x, y+row);
@@ -122,7 +129,7 @@ uint32_t Bitmap::read32(SdFile* f) {
 }
 
 int Bitmap::XY(int x, int y) {
-    y = constrain(y,0,BM_PIXEL_Y-1);
-    x = constrain(x,0,BM_PIXEL_X-1);
-    return (y * BM_PIXEL_X) + x;
+    y = constrain(y,0,height-1);
+    x = constrain(x,0,width-1);
+    return (y * width) + x;
 }

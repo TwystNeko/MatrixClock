@@ -12,6 +12,7 @@
 #include "Emitter_Spin.h"
 #include "PartMatrix.h"
 #include "Bitmap.h"
+#include "Clocks.h"
 
 const byte numParticles = 60;
 Particle_Bounce particles[numParticles];
@@ -36,7 +37,9 @@ SdFile file;
 #define MODE_TIMEOUT 30
 
 CRGB leds[kMatrixWidth * kMatrixHeight];
-Bitmap bmp(&sd, &file, leds);
+Bitmap bmp(kMatrixWidth, kMatrixHeight, &sd, &file, leds);
+Clock clock(kMatrixWidth,kMatrixHeight, leds);
+
 const rgb24 COLOR_BLACK = { 0,0,0 };
 const rgb24 COLOR_WHITE = { 255,255,255};
 
@@ -574,6 +577,7 @@ void drawFunkySpiral() {
 }
 
 void drawClockBadge() { 
+  /*
   char str[32];
   sprintf(str,"%02d", hour());
   pSmartMatrix->setFont(gohufontb);
@@ -583,7 +587,10 @@ void drawClockBadge() {
   if(second()%2) {
     pSmartMatrix->setFont(gohufont);
    pSmartMatrix->drawString(13,13,COLOR_WHITE,":");
-  }
+  }*/
+   clock.useWuLine = true;
+   clock.hColor = CHSV(0,0,255);
+   clock.analogClock(15,15,15);
 }
 
 void drawNoise() { 
