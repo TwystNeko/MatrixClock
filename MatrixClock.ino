@@ -7,6 +7,22 @@
 #include "SdFatUtil.h"
 #include "IRCodes.h"
 #include "math.h"
+#include "ParticleSys.h"
+#include "Particle_Bounce.h"
+#include "Emitter_Spin.h"
+#include "PartMatrix.h"
+#include "Bitmap.h"
+
+const byte numParticles = 60;
+Particle_Bounce particles[numParticles];
+Emitter_Spin emitter(112,112,5,7);
+ParticleSys pSys(numParticles, particles, &emitter);
+PartMatrix pMatrix;
+
+SdFat sd;
+SdFile file;
+
+
 
 #define kMatrixWidth  32
 #define kMatrixHeight 32
@@ -20,7 +36,7 @@
 #define MODE_TIMEOUT 30
 
 CRGB leds[kMatrixWidth * kMatrixHeight];
-
+Bitmap bmp(&sd, &file, leds);
 const rgb24 COLOR_BLACK = { 0,0,0 };
 const rgb24 COLOR_WHITE = { 255,255,255};
 
@@ -43,8 +59,7 @@ struct timer {
 timer multiTimer[5];
 
 IRrecv irReceiver(IR_RECV_CS);
-SdFat sd; // set filesystem
-SdFile file; // set filesystem
+
 
 bool isOff = false;
 bool modeOption = true;
@@ -372,12 +387,14 @@ void setup() {
         multiTimer[4].min = 0;
         multiTimer[4].count = 0;
 
-        Serial.print("Initializing SD card...");
-        if (!sd.begin(SD_CS, SPI_FULL_SPEED)) {
-          Serial.println("failed!");
-          return;
-        }
-        Serial.println("SD OK!");
+  Serial.print("Initializing SD card...");
+  if (!sd.begin(SD_CS, SPI_FULL_SPEED)) {
+    Serial.println("failed!");
+    return;
+  }
+  Serial.println("SD OK!");
+
+
 }
 
 void UpdateTimers() 
@@ -526,11 +543,14 @@ void drawCurrentMode() {
         drawCube();
         break;
       case 3:
-
+        //drawGreenFire();
+        bmpTest();
         break;
     }
     if(showClock) { 
+    //  if(currentMode != 3) { 
       drawClockBadge();
+  //    }
     }
     LEDS.show();
   }
@@ -539,8 +559,11 @@ void drawCurrentMode() {
 // Effects
 // ========================================
 void bmpTest() { 
-  bmpDraw("/slides/entslogo.bmp",0,0);
-  nextFrame = millis() + 1000;
+  //showClock = false;
+  if(initMode) { 
+    bmp.Draw("/slides/entslogo.bmp",0,0);
+  }
+  nextFrame = millis() + 10;
 }
 
 void drawFunkySpiral() { 
@@ -554,7 +577,6 @@ void drawClockBadge() {
   char str[32];
   sprintf(str,"%02d", hour());
   pSmartMatrix->setFont(gohufontb);
- // pSmartMatrix->fillRoundRectangle(2,11,29,19,1,COLOR_BLACK);
   pSmartMatrix->drawString(3,12,COLOR_WHITE,str);
   sprintf(str,"%02d", minute());
   pSmartMatrix->drawString(18,12,COLOR_WHITE,str);
@@ -584,120 +606,6 @@ void drawNoise() {
 
 }
 
-void bmpDraw(char *filename, uint8_t x, uint8_t y) {
-
-  int      bmpWidth, bmpHeight;   // W+H in pixels
-  uint8_t  bmpDepth;              // Bit depth (currently must be 24)
-  uint32_t bmpImageoffset;        // Start of image data in file
-  uint32_t rowSize;               // Not always = bmpWidth; may have padding
-  uint8_t  sdbuffer[3*64]; // pixel buffer (R+G+B per pixel)
-  uint8_t  buffidx = sizeof(sdbuffer); // Current position in sdbuffer
-  boolean  goodBmp = false;       // Set to true on valid header parse
-  boolean  flip    = true;        // BMP is stored bottom-to-top
-  int      w, h, row, col;
-  //  uint8_t  r, g, b;
-  uint32_t pos = 0, startTime = millis();
-
-  if((x >= kMatrixWidth) || (y >= kMatrixHeight)) return;
-
-  // Open requested file on SD card
-  file.open(filename, O_READ);
-
-  // Parse BMP header
-  if(read16(file) == 0x4D42) { // BMP signature
-
-    void(read32(file));
-
-    void(read32(file)); // Read & ignore creator bytes
-    bmpImageoffset = read32(file); // Start of image data
-    // Read DIB header
-
-    void(read32(file));
-    bmpWidth  = read32(file);
-    bmpHeight = read32(file);
-    if(read16(file) == 1) { // # planes -- must be '1'
-      bmpDepth = read16(file); // bits per pixel
-      if((bmpDepth == 24) && (read32(file) == 0)) { // 0 = uncompressed
-
-        goodBmp = true; // Supported BMP format -- proceed!
-
-        // BMP rows are padded (if needed) to 4-byte boundary
-        rowSize = (bmpWidth * 3 + 3) & ~3;
-
-        // If bmpHeight is negative, image is in top-down order.
-        // This is not canon but has been observed in the wild.
-        if(bmpHeight < 0) {
-          bmpHeight = -bmpHeight;
-          flip      = false;
-        }
-
-        // Crop area to be loaded
-        w = bmpWidth;
-        h = bmpHeight;
-
-        if((x+w-1) >= kMatrixWidth)  w = kMatrixWidth  - x;
-        if((y+h-1) >= kMatrixHeight) h = kMatrixHeight - y;
-
-        for (row=0; row<h; row++) { // For each scanline...
-          //          tft.goTo(x, y+row);
-
-
-          if(flip) // Bitmap is stored bottom-to-top order (normal BMP)
-            pos = bmpImageoffset + (bmpHeight - 1 - row) * rowSize;
-          else     // Bitmap is stored top-to-bottom
-          pos = bmpImageoffset + row * rowSize;
-          if(file.curPosition() != pos) { // Need seek?
-            file.seekSet(pos);
-            buffidx = sizeof(sdbuffer); // Force buffer reload
-          }
-
-          // optimize by setting pins now
-          for (col=0; col<w; col++) { // For each pixel...
-            // Time to read more pixel data?
-            if (buffidx >= sizeof(sdbuffer)) { // Indeed
-              file.read(sdbuffer, sizeof(sdbuffer));
-              buffidx = 0; // Set index to beginning
-            }
-
-            // Convert pixel from BMP to Matrix format, push to display
-            CRGB color;
-            color.blue = sdbuffer[buffidx++];
-            color.green = sdbuffer[buffidx++];
-            color.red = sdbuffer[buffidx++];
-            leds[XY(x+col, y+row)] = color;
-          } // end pixel
-        } // end scanline
-      } // end goodBmp
-    }
-  }
-
-  file.close();
-  if(!goodBmp) {
-    Serial.print("BMP format not recognized.");
-    Serial.println(filename);
-  }
-}
-
-// These read 16- and 32-bit types from the SD card file.
-// BMP data is stored little-endian, Arduino is little-endian too.
-// May need to reverse subscript order if porting elsewhere.
-
-uint16_t read16(SdFile& f) {
-  uint16_t result;
-  ((uint8_t *)&result)[0] = f.read(); // LSB
-  ((uint8_t *)&result)[1] = f.read(); // MSB
-  return result;
-}
-
-uint32_t read32(SdFile& f) {
-  uint32_t result;
-  ((uint8_t *)&result)[0] = f.read(); // LSB
-  ((uint8_t *)&result)[1] = f.read();
-  ((uint8_t *)&result)[2] = f.read();
-  ((uint8_t *)&result)[3] = f.read(); // MSB
-  return result;
-}
-
 void drawCube() { 
 
   if(initMode) {
@@ -715,3 +623,27 @@ void drawCube() {
 
   nextFrame = millis() + 10;
 }
+
+void drawGreenFire() { 
+  if(initMode) { 
+         emitter.oscilate = true;
+        PartMatrix::isOverflow = true;
+        pMatrix.reset();
+        initMode = false;
+  }
+  pSys.update();
+  drawParticles();
+  nextFrame = millis() + 30;
+
+}
+
+void drawParticles() { 
+  pMatrix.reset();
+  pMatrix.render(particles,numParticles);
+  for (int y = 0; y< PS_PIXELS_Y; y++) { 
+    for(int x=0; x< PS_PIXELS_X; x++) { 
+      leds[XY(x,31-y)] = CRGB(pMatrix.matrix[x][y].r,pMatrix.matrix[x][y].g, pMatrix.matrix[x][y].b);
+    }
+  }
+}
+
