@@ -3,6 +3,10 @@ MatrixClock
 
 A Clock built on a P6-type 32x32 matrix
 
+
+Current BOM: 
+https://docs.google.com/spreadsheets/d/1QQIDFfNcLDkBRQjZhSw6EHSfWquRy7-uGgzx3K-wZ10
+
 Hardware used:
 * Teensy 3.1
 * P6-type RGB 32x32 matrix

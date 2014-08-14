@@ -7,21 +7,14 @@
 #include "SdFatUtil.h"
 #include "IRCodes.h"
 #include "math.h"
-#include "ParticleSys.h"
-#include "Particle_Bounce.h"
-#include "Emitter_Spin.h"
-#include "PartMatrix.h"
 #include "Bitmap.h"
 #include "Clocks.h"
 
-const byte numParticles = 60;
-Particle_Bounce particles[numParticles];
-Emitter_Spin emitter(112,112,5,7);
-ParticleSys pSys(numParticles, particles, &emitter);
-PartMatrix pMatrix;
 
 SdFat sd;
 SdFile file;
+
+const byte numParticles = 30;
 
 
 
@@ -37,7 +30,9 @@ SdFile file;
 #define MODE_TIMEOUT 30
 
 CRGB leds[kMatrixWidth * kMatrixHeight];
+
 Bitmap bmp(kMatrixWidth, kMatrixHeight, &sd, &file, leds);
+
 Clock clock(kMatrixWidth,kMatrixHeight, leds);
 
 const rgb24 COLOR_BLACK = { 0,0,0 };
@@ -65,7 +60,7 @@ IRrecv irReceiver(IR_RECV_CS);
 
 
 bool isOff = false;
-bool modeOption = true;
+bool clockOption = true;
 bool showClock = true;
 
 uint32_t nextFrame = 0;
@@ -493,7 +488,7 @@ unsigned long handleInput() {
     }
 
     if (input == IRCODE_SEL) { 
-      modeOption = !modeOption;
+      clockOption = !clockOption;
     }
     if(input == IRCODE_A) { 
       autoMode = !autoMode;
@@ -546,8 +541,8 @@ void drawCurrentMode() {
         drawCube();
         break;
       case 3:
-        //drawGreenFire();
         bmpTest();
+       
         break;
     }
     if(showClock) { 
@@ -577,7 +572,7 @@ void drawFunkySpiral() {
 }
 
 void drawClockBadge() { 
-  /*
+  if(clockOption) {
   char str[32];
   sprintf(str,"%02d", hour());
   pSmartMatrix->setFont(gohufontb);
@@ -587,10 +582,12 @@ void drawClockBadge() {
   if(second()%2) {
     pSmartMatrix->setFont(gohufont);
    pSmartMatrix->drawString(13,13,COLOR_WHITE,":");
-  }*/
-   clock.useWuLine = true;
+  }
+} else {
+   clock.useWuLine = false;
    clock.hColor = CHSV(0,0,255);
    clock.analogClock(15,15,15);
+ }
 }
 
 void drawNoise() { 
@@ -613,6 +610,7 @@ void drawNoise() {
 
 }
 
+
 void drawCube() { 
 
   if(initMode) {
@@ -630,27 +628,3 @@ void drawCube() {
 
   nextFrame = millis() + 10;
 }
-
-void drawGreenFire() { 
-  if(initMode) { 
-         emitter.oscilate = true;
-        PartMatrix::isOverflow = true;
-        pMatrix.reset();
-        initMode = false;
-  }
-  pSys.update();
-  drawParticles();
-  nextFrame = millis() + 30;
-
-}
-
-void drawParticles() { 
-  pMatrix.reset();
-  pMatrix.render(particles,numParticles);
-  for (int y = 0; y< PS_PIXELS_Y; y++) { 
-    for(int x=0; x< PS_PIXELS_X; x++) { 
-      leds[XY(x,31-y)] = CRGB(pMatrix.matrix[x][y].r,pMatrix.matrix[x][y].g, pMatrix.matrix[x][y].b);
-    }
-  }
-}
-
