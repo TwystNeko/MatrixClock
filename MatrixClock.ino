@@ -166,7 +166,6 @@ struct squareFace
   int length;
   int sommets[4];
   int ed[4];
-
   squareFace()
   {
     set(-1,-1,-1,-1);
@@ -190,6 +189,32 @@ struct squareFace
     this->sommets[3]=d;
   }
 
+};
+
+struct triFace
+{
+  int length;
+  int sommets[3];
+  int ed[3];
+
+  triFace()
+  {
+    set(-1,-1,-1);
+  }
+  triFace(int a, int b, int c)
+  {
+    this->length =3;
+    this->sommets[0]=a;
+    this->sommets[1]=b;
+    this->sommets[2]=c;
+  }
+  void set(int a, int b, int c)
+  { 
+    this->length =3;
+    this->sommets[0]=a;
+    this->sommets[1]=b;
+    this->sommets[2]=c;
+  }
 };
 
 // ------------------------------------------------------------
@@ -335,7 +360,150 @@ for (i=0;i<12;i++)
 
 };
 
+// tetrahedron
+struct Octahedron
+{
+  // Local vertices
+  Vertex  local[6];
+  // Camera aligned vertices
+  Vertex  aligned[6];
+  // On-screen projected vertices
+  Point   screen[6];
+  // Faces
+  triFace face[8];
+  // Edges
+  EdgePoint edge[12];
+  int nbEdges;
+  // ModelView matrix
+  float m00,m01,m02,m10,m11,m12,m20,m21,m22;  
+
+  // constructor
+  Octahedron(){}
+
+  // constructs the cube
+  void make(int w)
+  {
+    nbEdges = 0;
+
+    local[0].set(w,0,0);
+    local[1].set(-w,0,0);
+    local[2].set(0,w,0);
+    local[3].set(0,-w,0);
+    local[4].set(0,0,w);
+    local[5].set(0,0,-w);
+
+    face[0].set(0,2,4);
+    face[1].set(0,2,5);
+    face[2].set(0,3,4);
+    face[3].set(0,3,5);
+    face[4].set(1,2,4);
+    face[5].set(1,2,5);
+    face[6].set(1,3,4);
+    face[7].set(1,3,5);
+    
+
+
+    int f,i;
+    for (f=0;f<8;f++)
+    {  
+      for (i=0;i<face[f].length;i++)
+      {
+        face[f].ed[i]= this->findEdge(face[f].sommets[i],face[f].sommets[i?i-1:face[f].length-1]);
+      }
+    }
+
+  }
+
+  // finds edges from faces
+  int findEdge(int a,int b)
+  {    
+    int i;
+    for (i=0;i<nbEdges;i++)
+      if ( (edge[i].x==a && edge[i].y==b) || (edge[i].x==b && edge[i].y==a))
+        return i;
+    edge[nbEdges++].set(a,b);
+    return i;
+  }
+
+  // rotates according to angle x&y
+  void rotate(float angx, float angy)
+  {
+    int i,j;
+    int a,b,c;
+    float cx=cos(angx);
+    float sx=sin(angx);
+    float cy=cos(angy);
+    float sy=sin(angy);
+
+    m00=cy;  
+    m01=0;  
+    m02=-sy;
+    m10=sx*sy;
+    m11=cx;
+    m12=sx*cy;
+    m20=cx*sy;
+    m21=-sx;
+    m22=cx*cy;
+
+    for (i=0;i<6;i++)
+    {  
+      aligned[i].x=m00*local[i].x+m01*local[i].y+m02*local[i].z;
+      aligned[i].y=m10*local[i].x+m11*local[i].y+m12*local[i].z;
+      aligned[i].z=m20*local[i].x+m21*local[i].y+m22*local[i].z+zCamera;
+
+      screen[i].x = floor((Ox+focal*aligned[i].x/aligned[i].z));
+      screen[i].y = floor((Oy-focal*aligned[i].y/aligned[i].z));        
+    }          
+
+    for (i=0;i<12;i++)
+      edge[i].visible=false;
+
+    Point *pa,*pb,*pc;
+    for (i=0;i<8;i++)
+    {  
+      pa=screen + face[i].sommets[0];  
+      pb=screen + face[i].sommets[1];  
+      pc=screen + face[i].sommets[2];  
+
+      boolean back=((pb->x-pa->x)*(pc->y-pa->y)-(pb->y-pa->y)*(pc->x-pa->x))<0;
+      if (!back)
+      {
+        int j;
+        for (j=0;j<3;j++)
+        {      
+          edge[face[i].ed[j]].visible=true;
+        }
+      }      
+    }
+  }
+
+  // Draw the cube using the line method !
+  void draw(int hue)
+  {
+     int i;
+
+    // Backface
+    EdgePoint *e;
+    for (i=0;i<12;i++)
+    {  
+      e = edge+i;
+      if (!e->visible)
+        pSmartMatrix->drawLine(screen[e->x].x,screen[e->x].y,screen[e->y].x,screen[e->y].y,CRGB(CHSV(hue,255,128)));  
+    }
+for (i=0;i<12;i++)
+    {  
+      e = edge+i;
+      if (e->visible)
+      {
+        pSmartMatrix->drawLine(screen[e->x].x,screen[e->x].y,screen[e->y].x,screen[e->y].y,CRGB(CHSV(hue,255,255)));
+      }
+    }
+
+  }
+
+};
 Cube cube;
+Octahedron tetra;
 
 time_t getTeensy3Time()
 {
@@ -546,9 +714,9 @@ void drawCurrentMode() {
         break;
     }
     if(showClock) { 
-    //  if(currentMode != 3) { 
+      if(currentMode != 3) { 
       drawClockBadge();
-  //    }
+      }
     }
     LEDS.show();
   }
@@ -559,7 +727,7 @@ void drawCurrentMode() {
 void bmpTest() { 
   //showClock = false;
   if(initMode) { 
-    bmp.Draw("/slides/entslogo.bmp",0,0);
+    bmp.Draw("/slides/rtype.bmp",0,0);
   }
   nextFrame = millis() + 10;
 }
@@ -615,6 +783,7 @@ void drawCube() {
 
   if(initMode) {
     cube.make(cubeWidth);
+    tetra.make(cubeWidth+5);
     initMode = false;
   }
   pSmartMatrix->fillScreen(COLOR_BLACK);
@@ -623,7 +792,9 @@ void drawCube() {
   if(Angx>=TWO_PI) Angx-=TWO_PI;
   if(Angy>=TWO_PI) Angy-=TWO_PI;
   cube.rotate(Angx,Angy);
+  tetra.rotate(Angx,Angy);
   cube.draw(cubeHue);
+  tetra.draw(cubeHue+60);
   cubeHue++;
 
   nextFrame = millis() + 10;
