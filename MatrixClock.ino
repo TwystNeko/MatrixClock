@@ -385,21 +385,21 @@ struct Octahedron
   {
     nbEdges = 0;
 
-    local[0].set(w,0,0);
-    local[1].set(-w,0,0);
-    local[2].set(0,w,0);
-    local[3].set(0,-w,0);
-    local[4].set(0,0,w);
-    local[5].set(0,0,-w);
+    local[0].set(w,0,0); // +x
+    local[1].set(-w,0,0); // -x
+    local[2].set(0,w,0); // +y
+    local[3].set(0,-w,0); // -y
+    local[4].set(0,0,w); // +z
+    local[5].set(0,0,-w); // -z
 
-    face[0].set(0,2,4);
-    face[1].set(0,2,5);
-    face[2].set(0,3,4);
-    face[3].set(0,3,5);
-    face[4].set(1,2,4);
-    face[5].set(1,2,5);
-    face[6].set(1,3,4);
-    face[7].set(1,3,5);
+    face[0].set(4,2,0); //zyx
+    face[1].set(4,0,3); //zx-y
+    face[2].set(4,3,1); //z-y-x
+    face[3].set(4,1,2); //z-xy
+    face[4].set(5,2,1); //-zy-x
+    face[5].set(5,0,2); //-zxy
+    face[6].set(5,3,0); //-z-yx
+    face[7].set(5,1,3); //-z-x-y
     
 
 
@@ -465,7 +465,7 @@ struct Octahedron
       pb=screen + face[i].sommets[1];  
       pc=screen + face[i].sommets[2];  
 
-      boolean back=((pb->x-pa->x)*(pc->y-pa->y)-(pb->y-pa->y)*(pc->x-pa->x))<0;
+      boolean back=((pb->x - pa->x)*(pc->y - pa->y)-(pb->y - pa->y)*(pc->x - pa->x))<0;
       if (!back)
       {
         int j;
@@ -477,7 +477,7 @@ struct Octahedron
     }
   }
 
-  // Draw the cube using the line method !
+  // Draw the cube using the triangle method !
   void draw(int hue)
   {
      int i;
@@ -488,21 +488,27 @@ struct Octahedron
     {  
       e = edge+i;
       if (!e->visible)
-        pSmartMatrix->drawLine(screen[e->x].x,screen[e->x].y,screen[e->y].x,screen[e->y].y,CRGB(CHSV(hue,255,128)));  
+        pSmartMatrix->drawLine(screen[e->x].x,screen[e->x].y,screen[e->y].x,screen[e->y].y,CRGB(CHSV(hue,255,255)));  
     }
 for (i=0;i<12;i++)
     {  
       e = edge+i;
       if (e->visible)
       {
-        pSmartMatrix->drawLine(screen[e->x].x,screen[e->x].y,screen[e->y].x,screen[e->y].y,CRGB(CHSV(hue,255,255)));
+        pSmartMatrix->drawLine(screen[e->x].x,screen[e->x].y,screen[e->y].x,screen[e->y].y,CRGB(CHSV(hue,255,128)));
       }
     }
 
+
+    for (int i = 0; i < 8; i++)
+    {
+      /* code */
+
+    }
   }
 
 };
-Cube cube;
+//Cube cube;
 Octahedron tetra;
 
 time_t getTeensy3Time()
@@ -782,8 +788,8 @@ void drawNoise() {
 void drawCube() { 
 
   if(initMode) {
-    cube.make(cubeWidth);
-    tetra.make(cubeWidth+5);
+   // cube.make(cubeWidth);
+    tetra.make(cubeWidth+10);
     initMode = false;
   }
   pSmartMatrix->fillScreen(COLOR_BLACK);
@@ -791,9 +797,9 @@ void drawCube() {
   Angy+= AngySpeed;
   if(Angx>=TWO_PI) Angx-=TWO_PI;
   if(Angy>=TWO_PI) Angy-=TWO_PI;
-  cube.rotate(Angx,Angy);
+ // cube.rotate(Angx,Angy);
   tetra.rotate(Angx,Angy);
-  cube.draw(cubeHue);
+ // cube.draw(cubeHue);
   tetra.draw(cubeHue+60);
   cubeHue++;
 
