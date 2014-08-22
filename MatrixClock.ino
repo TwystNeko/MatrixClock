@@ -158,38 +158,6 @@ struct Point
 
 };      
 
-// ------------------------------------------------------------
-// struct squareFace
-// ------------------------------------------------------------
-struct squareFace
-{      
-  int length;
-  int sommets[4];
-  int ed[4];
-  squareFace()
-  {
-    set(-1,-1,-1,-1);
-  }
-
-  squareFace(int a,int b,int c,int d)
-  {
-    this->length = 4;
-    this->sommets[0]=a;
-    this->sommets[1]=b;
-    this->sommets[2]=c;
-    this->sommets[3]=d;
-  }
-
-  void set(int a,int b,int c,int d)
-  {
-    this->length = 4;
-    this->sommets[0]=a;
-    this->sommets[1]=b;
-    this->sommets[2]=c;
-    this->sommets[3]=d;
-  }
-
-};
 
 struct triFace
 {
@@ -220,147 +188,7 @@ struct triFace
 // ------------------------------------------------------------
 // struct Cube
 // ------------------------------------------------------------
-struct Cube
-{
-  // Local vertices
-  Vertex  local[8];
-  // Camera aligned vertices
-  Vertex  aligned[8];
-  // On-screen projected vertices
-  Point   screen[8];
-  // Faces
-  squareFace face[6];
-  // Edges
-  EdgePoint edge[12];
-  int nbEdges;
-  // ModelView matrix
-  float m00,m01,m02,m10,m11,m12,m20,m21,m22;  
 
-  // constructor
-  Cube(){}
-
-  // constructs the cube
-  void make(int w)
-  {
-    nbEdges = 0;
-
-    local[0].set(-w,w,w);
-    local[1].set(w,w,w);
-    local[2].set(w,-w,w);
-    local[3].set(-w,-w,w);
-    local[4].set(-w,w,-w);
-    local[5].set(w,w,-w);
-    local[6].set(w,-w,-w);
-    local[7].set(-w,-w,-w);  
-
-    face[0].set(1,0,3,2);
-    face[1].set(0,4,7,3);
-    face[2].set(4,0,1,5);
-    face[3].set(4,5,6,7);
-    face[4].set(1,2,6,5);
-    face[5].set(2,3,7,6);
-
-    int f,i;
-    for (f=0;f<6;f++)
-    {  
-      for (i=0;i<face[f].length;i++)
-      {
-        face[f].ed[i]= this->findEdge(face[f].sommets[i],face[f].sommets[i?i-1:face[f].length-1]);
-      }
-    }
-
-  }
-
-  // finds edges from faces
-  int findEdge(int a,int b)
-  {    
-    int i;
-    for (i=0;i<nbEdges;i++)
-      if ( (edge[i].x==a && edge[i].y==b) || (edge[i].x==b && edge[i].y==a))
-        return i;
-    edge[nbEdges++].set(a,b);
-    return i;
-  }
-
-  // rotates according to angle x&y
-  void rotate(float angx, float angy)
-  {
-    int i,j;
-    int a,b,c;
-    float cx=cos(angx);
-    float sx=sin(angx);
-    float cy=cos(angy);
-    float sy=sin(angy);
-
-    m00=cy;  
-    m01=0;  
-    m02=-sy;
-    m10=sx*sy;
-    m11=cx;
-    m12=sx*cy;
-    m20=cx*sy;
-    m21=-sx;
-    m22=cx*cy;
-
-    for (i=0;i<8;i++)
-    {  
-      aligned[i].x=m00*local[i].x+m01*local[i].y+m02*local[i].z;
-      aligned[i].y=m10*local[i].x+m11*local[i].y+m12*local[i].z;
-      aligned[i].z=m20*local[i].x+m21*local[i].y+m22*local[i].z+zCamera;
-
-      screen[i].x = floor((Ox+focal*aligned[i].x/aligned[i].z));
-      screen[i].y = floor((Oy-focal*aligned[i].y/aligned[i].z));        
-    }          
-
-    for (i=0;i<12;i++)
-      edge[i].visible=false;
-
-    Point *pa,*pb,*pc;
-    for (i=0;i<6;i++)
-    {  
-      pa=screen + face[i].sommets[0];  
-      pb=screen + face[i].sommets[1];  
-      pc=screen + face[i].sommets[2];  
-
-      boolean back=((pb->x-pa->x)*(pc->y-pa->y)-(pb->y-pa->y)*(pc->x-pa->x))<0;
-      if (!back)
-      {
-        int j;
-        for (j=0;j<4;j++)
-        {      
-          edge[face[i].ed[j]].visible=true;
-        }
-      }      
-    }
-  }
-
-  // Draw the cube using the line method !
-  void draw(int hue)
-  {
-     int i;
-
-    // Backface
-    EdgePoint *e;
-    for (i=0;i<12;i++)
-    {  
-      e = edge+i;
-      if (!e->visible)
-        pSmartMatrix->drawLine(screen[e->x].x,screen[e->x].y,screen[e->y].x,screen[e->y].y,CRGB(CHSV(hue,255,128)));  
-    }
-for (i=0;i<12;i++)
-    {  
-      e = edge+i;
-      if (e->visible)
-      {
-        pSmartMatrix->drawLine(screen[e->x].x,screen[e->x].y,screen[e->y].x,screen[e->y].y,CRGB(CHSV(hue,255,255)));
-      }
-    }
-
-  }
-
-};
-
-// tetrahedron
 struct Octahedron
 {
   // Local vertices
@@ -558,7 +386,7 @@ void setup() {
         multiTimer[4].max = kMatrixHeight - 1;
         multiTimer[4].min = 0;
         multiTimer[4].count = 0;
-
+        Serial.begin(9600);
   Serial.print("Initializing SD card...");
   if (!sd.begin(SD_CS, SPI_FULL_SPEED)) {
     Serial.println("failed!");
@@ -695,6 +523,8 @@ void loop() {
       currentMode++;
       initMode = true;
       if(currentMode > maxMode) { currentMode = 0; }
+        Serial.print("Current Mode: ");
+        Serial.println(currentMode);
       nextMode = millis() + (MODE_TIMEOUT * 1000);
     }
   }
@@ -718,6 +548,7 @@ void drawCurrentMode() {
         bmpTest();
        
         break;
+
     }
     if(showClock) { 
       if(currentMode != 3) { 
@@ -725,6 +556,7 @@ void drawCurrentMode() {
       }
     }
     LEDS.show();
+
   }
 }
 
@@ -805,3 +637,5 @@ void drawCube() {
 
   nextFrame = millis() + 10;
 }
+
+
