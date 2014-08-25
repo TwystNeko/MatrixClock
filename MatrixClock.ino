@@ -9,7 +9,7 @@
 #include "math.h"
 #include "Bitmap.h"
 #include "Clocks.h"
-
+#include "Funcs3d.h"
 
 SdFat sd;
 SdFile file;
