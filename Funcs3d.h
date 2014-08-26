@@ -1,6 +1,11 @@
 #ifndef Funcs3d_h
 #define Funcs3d_h
 
+typedef struct { 
+	int ID;
+	float depth;
+} DepthMap;
+
 class Point3d
 {
 	public:
@@ -41,6 +46,7 @@ class Matrix3d
 	void MatrixIdentity();
 	void MatrixCopy(Matrix3d &M);
 	void MatrixMult(Matrix3d &M1, Matrix3d &M2);
+
 };
 
 class Th3dtran
@@ -53,7 +59,9 @@ public:
 	void Scale(float scale);
 	Point3d ChangeLocalObject(Point3d &p);
 	Point3d ChangeObjectPoint(Point3d &p);
-
+	Point3d getNormal(Point3d a, Point3d b, Point3d c);
+	Point3d Normalize(Point3d V);
+	void sortDepthMap(DepthMap *depthMap, int numFaces);
 	Matrix3d matrix, Rmat, rmatrix, objectmatrix;
 	char local;
 

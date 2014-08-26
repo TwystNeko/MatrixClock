@@ -10,6 +10,7 @@
 #include "Bitmap.h"
 #include "Clocks.h"
 #include "Funcs3d.h"
+#include "icosahedron.h"
 
 SdFat sd;
 SdFile file;
@@ -20,6 +21,8 @@ const byte numParticles = 30;
 
 #define kMatrixWidth  32
 #define kMatrixHeight 32
+#define XCENTER 15.5
+#define YCENTER 15.5
 
 #define NUM_LEDS (kMatrixWidth * kMatrixHeight)
 #define DEFAULT_BRIGHTNESS 255
@@ -58,6 +61,16 @@ timer multiTimer[5];
 
 IRrecv irReceiver(IR_RECV_CS);
 
+#define MESH_VERTICES 12
+#define MESH_FACES 21
+
+Point3d Icosahedron[MESH_VERTICES];
+Point3d Normals[MESH_FACES];
+Th3dtran Transform;
+
+bool PARALLEL_PROJECTION  = true;
+float AngX = 20.0;
+float AngY = 10.0;
 
 bool isOff = false;
 bool clockOption = true;
@@ -73,271 +86,6 @@ static uint16_t y;
 static uint16_t z;
 uint16_t speed = 20; 
 uint16_t scale = 31;
-
-// -----------------------------------------------------------
-// Spinning Cube from Peggy2 Library
-// -----------------------------------------------------------
-
-float focal = 30; // Focal of the camera
-int cubeWidth = 28; // Cube size
-float Angx = 0, AngxSpeed = 0.017; // rotation (angle+speed) around X-axis
-float Angy = 0, AngySpeed = 0.022; // rotation (angle+speed) around Y-axis
-float Ox=15.5,Oy=15.5; // position (x,y) of the frame center
-int zCamera = 110; // distance from cube to the eye of the camera
-
-unsigned short reps = 0; // used for grey scaling
-unsigned short repNumber = 1;  //Change scrolling rate-- number of reps at each position.
-
-// ------------------------------------------------------------
-// struct Vertex
-// ------------------------------------------------------------
-struct Vertex
-{
-  float x,y,z;  
-  Vertex()
-  {
-    this->set(0,0,0);
-  }
-
-  Vertex(float x,float y, float z)
-  {
-    this->set(x,y,z);
-  }
-
-  void set(float x, float y, float z)
-  {
-    this->x = x;
-    this->y = y;
-    this->z = z;
-  }
-};
-
-// ------------------------------------------------------------
-// struct EdgePoint
-// ------------------------------------------------------------
-struct EdgePoint
-{
-  int x,y;
-  boolean visible;
-
-  EdgePoint()
-  {
-    this->set(0,0);
-    this->visible = false;
-  }
-
-  void set(int a,int b)
-  {
-    this->x = a;
-    this->y = b;
-  }
-};
-
-// ------------------------------------------------------------
-// struct Point
-// ------------------------------------------------------------
-struct Point
-{      
-  float x,y;
-
-  Point()
-  {
-    set(0,0);
-  }
-
-  Point(float x,float y)
-  {
-    set(x,y);
-  }
-
-  void set(float x, float y)
-  {
-    this->x = x;
-    this->y = y;    
-  }
-
-};      
-
-
-struct triFace
-{
-  int length;
-  int sommets[3];
-  int ed[3];
-
-  triFace()
-  {
-    set(-1,-1,-1);
-  }
-  triFace(int a, int b, int c)
-  {
-    this->length =3;
-    this->sommets[0]=a;
-    this->sommets[1]=b;
-    this->sommets[2]=c;
-  }
-  void set(int a, int b, int c)
-  { 
-    this->length =3;
-    this->sommets[0]=a;
-    this->sommets[1]=b;
-    this->sommets[2]=c;
-  }
-};
-
-// ------------------------------------------------------------
-// struct Cube
-// ------------------------------------------------------------
-
-struct Octahedron
-{
-  // Local vertices
-  Vertex  local[6];
-  // Camera aligned vertices
-  Vertex  aligned[6];
-  // On-screen projected vertices
-  Point   screen[6];
-  // Faces
-  triFace face[8];
-  // Edges
-  EdgePoint edge[12];
-  int nbEdges;
-  // ModelView matrix
-  float m00,m01,m02,m10,m11,m12,m20,m21,m22;  
-
-  // constructor
-  Octahedron(){}
-
-  // constructs the cube
-  void make(int w)
-  {
-    nbEdges = 0;
-
-    local[0].set(w,0,0); // +x
-    local[1].set(-w,0,0); // -x
-    local[2].set(0,w,0); // +y
-    local[3].set(0,-w,0); // -y
-    local[4].set(0,0,w); // +z
-    local[5].set(0,0,-w); // -z
-
-    face[0].set(4,2,0); //zyx
-    face[1].set(4,0,3); //zx-y
-    face[2].set(4,3,1); //z-y-x
-    face[3].set(4,1,2); //z-xy
-    face[4].set(5,2,1); //-zy-x
-    face[5].set(5,0,2); //-zxy
-    face[6].set(5,3,0); //-z-yx
-    face[7].set(5,1,3); //-z-x-y
-    
-
-
-    int f,i;
-    for (f=0;f<8;f++)
-    {  
-      for (i=0;i<face[f].length;i++)
-      {
-        face[f].ed[i]= this->findEdge(face[f].sommets[i],face[f].sommets[i?i-1:face[f].length-1]);
-      }
-    }
-
-  }
-
-  // finds edges from faces
-  int findEdge(int a,int b)
-  {    
-    int i;
-    for (i=0;i<nbEdges;i++)
-      if ( (edge[i].x==a && edge[i].y==b) || (edge[i].x==b && edge[i].y==a))
-        return i;
-    edge[nbEdges++].set(a,b);
-    return i;
-  }
-
-  // rotates according to angle x&y
-  void rotate(float angx, float angy)
-  {
-    int i,j;
-    int a,b,c;
-    float cx=cos(angx);
-    float sx=sin(angx);
-    float cy=cos(angy);
-    float sy=sin(angy);
-
-    m00=cy;  
-    m01=0;  
-    m02=-sy;
-    m10=sx*sy;
-    m11=cx;
-    m12=sx*cy;
-    m20=cx*sy;
-    m21=-sx;
-    m22=cx*cy;
-
-    for (i=0;i<6;i++)
-    {  
-      aligned[i].x=m00*local[i].x+m01*local[i].y+m02*local[i].z;
-      aligned[i].y=m10*local[i].x+m11*local[i].y+m12*local[i].z;
-      aligned[i].z=m20*local[i].x+m21*local[i].y+m22*local[i].z+zCamera;
-
-      screen[i].x = floor((Ox+focal*aligned[i].x/aligned[i].z));
-      screen[i].y = floor((Oy-focal*aligned[i].y/aligned[i].z));        
-    }          
-
-    for (i=0;i<12;i++)
-      edge[i].visible=false;
-
-    Point *pa,*pb,*pc;
-    for (i=0;i<8;i++)
-    {  
-      pa=screen + face[i].sommets[0];  
-      pb=screen + face[i].sommets[1];  
-      pc=screen + face[i].sommets[2];  
-
-      boolean back=((pb->x - pa->x)*(pc->y - pa->y)-(pb->y - pa->y)*(pc->x - pa->x))<0;
-      if (!back)
-      {
-        int j;
-        for (j=0;j<3;j++)
-        {      
-          edge[face[i].ed[j]].visible=true;
-        }
-      }      
-    }
-  }
-
-  // Draw the cube using the triangle method !
-  void draw(int hue)
-  {
-     int i;
-
-    // Backface
-    EdgePoint *e;
-    for (i=0;i<12;i++)
-    {  
-      e = edge+i;
-      if (!e->visible)
-        pSmartMatrix->drawLine(screen[e->x].x,screen[e->x].y,screen[e->y].x,screen[e->y].y,CRGB(CHSV(hue,255,255)));  
-    }
-for (i=0;i<12;i++)
-    {  
-      e = edge+i;
-      if (e->visible)
-      {
-        pSmartMatrix->drawLine(screen[e->x].x,screen[e->x].y,screen[e->y].x,screen[e->y].y,CRGB(CHSV(hue,255,128)));
-      }
-    }
-
-
-    for (int i = 0; i < 8; i++)
-    {
-      /* code */
-
-    }
-  }
-
-};
-//Cube cube;
-Octahedron tetra;
 
 time_t getTeensy3Time()
 {
@@ -393,8 +141,85 @@ void setup() {
     return;
   }
   Serial.println("SD OK!");
+  loadMesh();
+
+}
+
+void loadMesh() {
+  // load mesh into the Point3d array. 
+  for(int i = 0; i<MESH_VERTICES;i++) { 
+    Icosahedron[i].lx = icosahedron_v[i][0];
+    Icosahedron[i].ly = icosahedron_v[i][1];
+    Icosahedron[i].lz = icosahedron_v[i][2];
+  }
+
+}
+ 
+
+DepthMap depthMap[MESH_FACES];
 
 
+void transformMesh() { 
+  Transform.Rotate(AngX,AngY,0);
+ // Transform.Translate(0,0,10);
+ Transform.Scale(1.5);
+  AngX +=.05;
+  AngY +=.05;
+  
+  for(int i=0; i<MESH_VERTICES;i++) {
+    Transform.ChangeObjectPoint(Icosahedron[i]);
+  }
+}
+
+void drawMesh() { 
+  // projection time. Let's cull the backfaces by checking the z component
+  int ax, ay,bx,by,cy,cx,V;
+  Point3d N;
+
+  // get average zdepth of each face
+  for(int i=0; i<MESH_FACES; i++) { 
+    // i is the face index. 
+    depthMap[i].depth = (Icosahedron[icosahedron_f[i][0]].az + Icosahedron[icosahedron_f[i][1]].az  + Icosahedron[icosahedron_f[i][2]].az )/3;
+    depthMap[i].ID = i;
+  }
+  Transform.sortDepthMap(depthMap, MESH_FACES);
+  // sort avgDepth - get the index of the smallest number
+
+  for(int i=0; i<MESH_FACES; i++) {
+     // N = getNormal(Icosahedron[icosahedron_f[depthMap[i].ID][0]],Icosahedron[icosahedron_f[depthMap[i].ID][1]],Icosahedron[icosahedron_f[depthMap[i].ID][2]]);
+     // if(N.az >= 0) { 
+     //   V=255;
+     // }
+
+      // okay, we should be able to see this. let's draw the face. 
+        if(PARALLEL_PROJECTION == true) { 
+          ax = floor(Icosahedron[icosahedron_f[depthMap[i].ID][0]].ax + XCENTER);
+          ay = floor(-Icosahedron[icosahedron_f[depthMap[i].ID][0]].ay + YCENTER);
+          bx = floor(Icosahedron[icosahedron_f[depthMap[i].ID][1]].ax  + XCENTER);
+          by = floor(-Icosahedron[icosahedron_f[depthMap[i].ID][1]].ay  + YCENTER);
+          cx = floor(Icosahedron[icosahedron_f[depthMap[i].ID][2]].ax + XCENTER);
+          cy = floor(-Icosahedron[icosahedron_f[depthMap[i].ID][2]].ay + YCENTER);
+        } else { 
+          ax = floor(XCENTER + 50 *Icosahedron[icosahedron_f[depthMap[i].ID][0]].ax / Icosahedron[icosahedron_f[depthMap[i].ID][0]].az);
+          ay = floor(YCENTER - 50 *Icosahedron[icosahedron_f[depthMap[i].ID][0]].ay / Icosahedron[icosahedron_f[depthMap[i].ID][0]].az);
+          bx = floor(XCENTER + 50 *Icosahedron[icosahedron_f[depthMap[i].ID][1]].ax / Icosahedron[icosahedron_f[depthMap[i].ID][1]].az);
+          by = floor(YCENTER - 50 *Icosahedron[icosahedron_f[depthMap[i].ID][1]].ay / Icosahedron[icosahedron_f[depthMap[i].ID][1]].az);
+          cx = floor(YCENTER + 50 *Icosahedron[icosahedron_f[depthMap[i].ID][2]].ax / Icosahedron[icosahedron_f[depthMap[i].ID][2]].az);
+          cy = floor(YCENTER - 50 *Icosahedron[icosahedron_f[depthMap[i].ID][2]].ay / Icosahedron[icosahedron_f[depthMap[i].ID][2]].az);
+
+        }
+          pSmartMatrix->drawTriangle(ax,ay,bx,by,cx,cy, CRGB(CHSV(cubeHue,255,map(depthMap[i].depth,depthMap[0].depth,depthMap[MESH_FACES-1].depth,192,255))));
+          
+      
+  }
+
+}
+
+void drawIcosahedron() { 
+  pSmartMatrix->fillScreen(CRGB(0,0,0));
+  transformMesh();
+  drawMesh();
+  nextFrame = millis() + 10;
 }
 
 void UpdateTimers() 
@@ -542,7 +367,7 @@ void drawCurrentMode() {
         drawFunkySpiral();
         break;
       case 2:
-        drawCube();
+        drawIcosahedron();
         break;
       case 3:
         bmpTest();
@@ -615,27 +440,3 @@ void drawNoise() {
   nextFrame = millis() + 10;
 
 }
-
-
-void drawCube() { 
-
-  if(initMode) {
-   // cube.make(cubeWidth);
-    tetra.make(cubeWidth+10);
-    initMode = false;
-  }
-  pSmartMatrix->fillScreen(COLOR_BLACK);
-  Angx+= AngxSpeed;
-  Angy+= AngySpeed;
-  if(Angx>=TWO_PI) Angx-=TWO_PI;
-  if(Angy>=TWO_PI) Angy-=TWO_PI;
- // cube.rotate(Angx,Angy);
-  tetra.rotate(Angx,Angy);
- // cube.draw(cubeHue);
-  tetra.draw(cubeHue+60);
-  cubeHue++;
-
-  nextFrame = millis() + 10;
-}
-
-
