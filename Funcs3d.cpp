@@ -29,17 +29,6 @@ Point3d Point3d::operator - ( Point3d &p )
    Temp.ly = ly - p.ly;
    Temp.lz = lz - p.lz;
 
-   Temp.ax = ax - p.ax;
-   Temp.ay = ay - p.ay;
-   Temp.az = az - p.az;
-
-   Temp.wx = wx - p.wx;
-   Temp.wy = wy - p.wy;
-   Temp.wz = wz - p.wz;
-
-   Temp.sx = sx - p.sx;
-   Temp.sy = sy - p.sy;
-   Temp.sz = sz - p.sz;
    return Temp;
   }
 
@@ -49,17 +38,6 @@ Point3d Point3d::operator + ( Point3d &p )
    Temp.ly = ly + p.ly;
    Temp.lz = lz + p.lz;
 
-   Temp.ax = ax + p.ax;
-   Temp.ay = ay + p.ay;
-   Temp.az = az + p.az;
-
-   Temp.wx = wx + p.wx;
-   Temp.wy = wy + p.wy;
-   Temp.wz = wz + p.wz;
-
-   Temp.sx = sx + p.sx;
-   Temp.sy = sy + p.sy;
-   Temp.sz = sz + p.sz;
    return Temp;
   }
 Point3d Point3d::operator * ( Point3d &p )
@@ -68,17 +46,7 @@ Point3d Point3d::operator * ( Point3d &p )
    Temp.ly = ly * p.ly;
    Temp.lz = lz * p.lz;
 
-   Temp.ax = ax * p.ax;
-   Temp.ay = ay * p.ay;
-   Temp.az = az * p.az;
 
-   Temp.wx = wx * p.wx;
-   Temp.wy = wy * p.wy;
-   Temp.wz = wz * p.wz;
-
-   Temp.sx = sx * p.sx;
-   Temp.sy = sy * p.sy;
-   Temp.sz = sz * p.sz;
    return Temp;
   }
 Point3d Point3d::operator / ( Point3d &p )
@@ -87,17 +55,6 @@ Point3d Point3d::operator / ( Point3d &p )
    Temp.ly = ly / p.ly;
    Temp.lz = lz / p.lz;
 
-   Temp.ax = ax / p.ax;
-   Temp.ay = ay / p.ay;
-   Temp.az = az / p.az;
-
-   Temp.wx = wx / p.wx;
-   Temp.wy = wy / p.wy;
-   Temp.wz = wz / p.wz;
-
-   Temp.sx = sx / p.sx;
-   Temp.sy = sy / p.sy;
-   Temp.sz = sz / p.sz;
    return Temp;
   }
 
@@ -106,17 +63,7 @@ Point3d &Point3d::operator -= ( Point3d &p )
    ly -= p.ly;
    lz -= p.lz;
 
-   ax -= p.ax;
-   ay -= p.ay;
-   az -= p.az;
 
-   wx -= p.wx;
-   wy -= p.wy;
-   wz -= p.wz;
-
-   sx -= p.sx;
-   sy -= p.sy;
-   sz -= p.sz;
    return *this;
   }
 Point3d &Point3d::operator += ( Point3d &p )
@@ -124,17 +71,6 @@ Point3d &Point3d::operator += ( Point3d &p )
    ly += p.ly;
    lz += p.lz;
 
-   ax += p.ax;
-   ay += p.ay;
-   az += p.az;
-
-   wx += p.wx;
-   wy += p.wy;
-   wz += p.wz;
-
-   sx += p.sx;
-   sy += p.sy;
-   sz += p.sz;
    return *this;
   }
 Point3d &Point3d::operator *= ( Point3d &p )
@@ -142,17 +78,7 @@ Point3d &Point3d::operator *= ( Point3d &p )
    ly *= p.ly;
    lz *= p.lz;
 
-   ax *= p.ax;
-   ay *= p.ay;
-   az *= p.az;
 
-   wx *= p.wx;
-   wy *= p.wy;
-   wz *= p.wz;
-
-   sx *= p.sx;
-   sy *= p.sy;
-   sz *= p.sz;
    return *this;
   }
 Point3d &Point3d::operator /= ( Point3d &p )
@@ -160,17 +86,7 @@ Point3d &Point3d::operator /= ( Point3d &p )
    ly /= p.ly;
    lz /= p.lz;
 
-   ax /= p.ax;
-   ay /= p.ay;
-   az /= p.az;
 
-   wx /= p.wx;
-   wy /= p.wy;
-   wz /= p.wz;
-
-   sx /= p.sx;
-   sy /= p.sy;
-   sz /= p.sz;
    return *this;
   }
 
@@ -180,17 +96,7 @@ Point3d Point3d::operator - ( double Value )
    Temp.ly = (long)(ly - Value);
    Temp.lz = (long)(lz - Value);
 
-   Temp.ax = (long)(ax- Value);
-   Temp.ay = (long)(ay - Value);
-   Temp.az = (long)(az - Value);
 
-   Temp.wx = (long)(wx- Value);
-   Temp.wy = (long)(wy - Value);
-   Temp.wz = (long)(wz - Value);
-
-   Temp.sx = (long)(sx- Value);
-   Temp.sy = (long)(sy - Value);
-   Temp.sz = (long)(sz - Value);
    return Temp;
   }
 Point3d Point3d::operator + ( double Value )
@@ -199,17 +105,6 @@ Point3d Point3d::operator + ( double Value )
    Temp.ly = (long)(ly + Value);
    Temp.lz = (long)(lz + Value);
 
-   Temp.ax = (long)(ax+ Value);
-   Temp.ay = (long)(ay + Value);
-   Temp.az = (long)(az + Value);
-
-   Temp.wx = (long)(wx+ Value);
-   Temp.wy = (long)(wy + Value);
-   Temp.wz = (long)(wz + Value);
-
-   Temp.sx = (long)(sx+ Value);
-   Temp.sy = (long)(sy + Value);
-   Temp.sz = (long)(sz + Value);
    return Temp;
   }
 Point3d Point3d::operator * ( double Value )
@@ -218,17 +113,6 @@ Point3d Point3d::operator * ( double Value )
    Temp.ly = (long)(ly * Value);
    Temp.lz = (long)(lz * Value);
 
-   Temp.ax = (long)(ax* Value);
-   Temp.ay = (long)(ay * Value);
-   Temp.az = (long)(az * Value);
-
-   Temp.wx = (long)(wx* Value);
-   Temp.wy = (long)(wy * Value);
-   Temp.wz = (long)(wz * Value);
-
-   Temp.sx = (long)(sx* Value);
-   Temp.sy = (long)(sy * Value);
-   Temp.sz = (long)(sz * Value);
    return Temp;
   }
 Point3d Point3d::operator / ( double Value )
@@ -237,17 +121,6 @@ Point3d Point3d::operator / ( double Value )
    Temp.ly = (long)(ly / Value);
    Temp.lz = (long)(lz / Value);
 
-   Temp.ax = (long)(ax/ Value);
-   Temp.ay = (long)(ay / Value);
-   Temp.az = (long)(az / Value);
-
-   Temp.wx = (long)(wx/ Value);
-   Temp.wy = (long)(wy / Value);
-   Temp.wz = (long)(wz / Value);
-
-   Temp.sx = (long)(sx/ Value);
-   Temp.sy = (long)(sy / Value);
-   Temp.sz = (long)(sz / Value);
    return Temp;
   }
   
@@ -255,72 +128,26 @@ Point3d &Point3d::operator -= ( double Value )
   {lx -= (long)Value;
    ly -= (long)Value;
    lz -= (long)Value;
-    
-   ax -= (long)Value;
-   ay -= (long)Value;
-   az -= (long)Value;
-    
-   wx -= (long)Value;
-   wy -= (long)Value;
-   wz -= (long)Value;
-    
-   sx -= (long)Value;
-   sy -= (long)Value;
-   sz -= (long)Value;
+
    return *this;
   }
 Point3d &Point3d::operator += ( double V )
   {lx += (long)V;
    ly += (long)V;
    lz += (long)V;
-    
-   ax += (long)V;
-   ay += (long)V;
-   az += (long)V;
-    
-   wx += (long)V;
-   wy += (long)V;
-   wz += (long)V;
-    
-   sx += (long)V;
-   sy += (long)V;
-   sz += (long)V;
+
    return *this;
   }
 Point3d &Point3d::operator *= ( double Value )
   {lx *= (long)Value;
    ly *= (long)Value;
    lz *= (long)Value;
-
-   ax *= (long)Value;
-   ay *= (long)Value;
-   az *= (long)Value;
-    
-   wx *= (long)Value;
-   wy *= (long)Value;
-   wz *= (long)Value;
-    
-   sx *= (long)Value;
-   sy *= (long)Value;
-   sz *= (long)Value;
    return *this;
   }
 Point3d &Point3d::operator /= ( double V )
   {lx /= (long)V;
    ly /= (long)V;
    lz /= (long)V;
-
-   ax /= (long)V;
-   ay /= (long)V;
-   az /= (long)V;
-    
-   wx /= (long)V;
-   wy /= (long)V;
-   wz /= (long)V;
-    
-   sx /= (long)V;
-   sy /= (long)V;
-   sz /= (long)V;
    return *this;
   }
 
@@ -330,41 +157,17 @@ Point3d Th3dtran::getNormal(Point3d a, Point3d b, Point3d c) {
   Point3d n;
   Point3d U = (b - a);
   Point3d V = (c - a);
-
-  n.ax = (U.ay * V.az) - (U.az * V.ay);
-  n.ay = (U.az * V.ax) - (U.ax * V.az);
-  n.az = (U.ax * V.ay) - (U.ay * V.ax);
-
   n.lx = (U.ly * V.lz) - (U.lz * V.ly);
   n.ly = (U.lz * V.lx) - (U.lx * V.lz);
   n.lz = (U.lx * V.ly) - (U.ly * V.lx);
 
-  n.wx = (U.wy * V.wz) - (U.wz * V.wy);
-  n.wy = (U.wz * V.wx) - (U.wx * V.wz);
-  n.wz = (U.wx * V.wy) - (U.wy * V.wx);
-
-  n.sx = (U.sy * V.sz) - (U.sz * V.sy);
-  n.sy = (U.sz * V.sx) - (U.sx * V.sz);
-  n.sz = (U.sx * V.sy) - (U.sy * V.sx);
  // return Normalize(n);
   return n;
 }
 
 Point3d Th3dtran::Normalize(Point3d V) { 
   Point3d N;
-  float length = sqrt((V.ax * V.ax) + (V.ay * V.ay) + (V.ax * V.az));
-  N.ax = V.ax/length;
-  N.ay = V.ay/length;
-  N.az = V.az/length;
-  length = sqrt((V.wx * V.wx) + (V.wy * V.wy) + (V.wx * V.wz));
-  N.wx = V.wx/length;
-  N.wy = V.wy/length;
-  N.wz = V.wz/length;
-  length = sqrt((V.sx * V.sx) + (V.sy * V.sy) + (V.sx * V.sz));
-  N.sx = V.sx/length;
-  N.sy = V.sy/length;
-  N.sz = V.sz/length;
-  length = sqrt((V.lx * V.lx) + (V.ly * V.ly) + (V.lx * V.lz));
+ float length = sqrt((V.lx * V.lx) + (V.ly * V.ly) + (V.lx * V.lz));
   N.lx = V.lx/length;
   N.ly = V.ly/length;
   N.lz = V.lz/length;

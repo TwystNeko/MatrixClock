@@ -63,12 +63,14 @@ IRrecv irReceiver(IR_RECV_CS);
 
 #define MESH_VERTICES 12
 #define MESH_FACES 21
+#define MESH_FOV 45
 
 Point3d Icosahedron[MESH_VERTICES];
 Point3d Normals[MESH_FACES];
 Th3dtran Transform;
 
-bool PARALLEL_PROJECTION  = true;
+bool MESH_WIREFRAME = false;
+
 float AngX = 20.0;
 float AngY = 10.0;
 
@@ -152,67 +154,72 @@ void loadMesh() {
     Icosahedron[i].ly = icosahedron_v[i][1];
     Icosahedron[i].lz = icosahedron_v[i][2];
   }
-
 }
- 
 
 DepthMap depthMap[MESH_FACES];
 
 
 void transformMesh() { 
   Transform.Rotate(AngX,AngY,0);
- // Transform.Translate(0,0,10);
- Transform.Scale(1.5);
+  Transform.Translate(0,0,-30);
+  Transform.Scale(1);
   AngX +=.05;
   AngY +=.05;
   
   for(int i=0; i<MESH_VERTICES;i++) {
     Transform.ChangeObjectPoint(Icosahedron[i]);
+   
+    Transform.ChangeLocalObject(Icosahedron[i]);
+ 
   }
 }
 
 void drawMesh() { 
-  // projection time. Let's cull the backfaces by checking the z component
-  int ax, ay,bx,by,cy,cx,V;
+  int ax, ay,bx,by,cy,cx,V,baseHue;
+  baseHue = cubeHue;
   Point3d N;
 
-  // get average zdepth of each face
   for(int i=0; i<MESH_FACES; i++) { 
-    // i is the face index. 
     depthMap[i].depth = (Icosahedron[icosahedron_f[i][0]].az + Icosahedron[icosahedron_f[i][1]].az  + Icosahedron[icosahedron_f[i][2]].az )/3;
     depthMap[i].ID = i;
   }
   Transform.sortDepthMap(depthMap, MESH_FACES);
-  // sort avgDepth - get the index of the smallest number
+
 
   for(int i=0; i<MESH_FACES; i++) {
-     // N = getNormal(Icosahedron[icosahedron_f[depthMap[i].ID][0]],Icosahedron[icosahedron_f[depthMap[i].ID][1]],Icosahedron[icosahedron_f[depthMap[i].ID][2]]);
-     // if(N.az >= 0) { 
-     //   V=255;
-     // }
 
-      // okay, we should be able to see this. let's draw the face. 
-        if(PARALLEL_PROJECTION == true) { 
+    
+        // Parallel Projection
+        /*
           ax = floor(Icosahedron[icosahedron_f[depthMap[i].ID][0]].ax + XCENTER);
           ay = floor(-Icosahedron[icosahedron_f[depthMap[i].ID][0]].ay + YCENTER);
           bx = floor(Icosahedron[icosahedron_f[depthMap[i].ID][1]].ax  + XCENTER);
           by = floor(-Icosahedron[icosahedron_f[depthMap[i].ID][1]].ay  + YCENTER);
           cx = floor(Icosahedron[icosahedron_f[depthMap[i].ID][2]].ax + XCENTER);
           cy = floor(-Icosahedron[icosahedron_f[depthMap[i].ID][2]].ay + YCENTER);
-        } else { 
-          ax = floor(XCENTER + 50 *Icosahedron[icosahedron_f[depthMap[i].ID][0]].ax / Icosahedron[icosahedron_f[depthMap[i].ID][0]].az);
-          ay = floor(YCENTER - 50 *Icosahedron[icosahedron_f[depthMap[i].ID][0]].ay / Icosahedron[icosahedron_f[depthMap[i].ID][0]].az);
-          bx = floor(XCENTER + 50 *Icosahedron[icosahedron_f[depthMap[i].ID][1]].ax / Icosahedron[icosahedron_f[depthMap[i].ID][1]].az);
-          by = floor(YCENTER - 50 *Icosahedron[icosahedron_f[depthMap[i].ID][1]].ay / Icosahedron[icosahedron_f[depthMap[i].ID][1]].az);
-          cx = floor(YCENTER + 50 *Icosahedron[icosahedron_f[depthMap[i].ID][2]].ax / Icosahedron[icosahedron_f[depthMap[i].ID][2]].az);
-          cy = floor(YCENTER - 50 *Icosahedron[icosahedron_f[depthMap[i].ID][2]].ay / Icosahedron[icosahedron_f[depthMap[i].ID][2]].az);
-
-        }
-          pSmartMatrix->drawTriangle(ax,ay,bx,by,cx,cy, CRGB(CHSV(cubeHue,255,map(depthMap[i].depth,depthMap[0].depth,depthMap[MESH_FACES-1].depth,192,255))));
+        */
+          // Perspective Projection
+          ax = XCENTER + MESH_FOV * Icosahedron[icosahedron_f[depthMap[i].ID][0]].wx / Icosahedron[icosahedron_f[depthMap[i].ID][0]].wz;
+          ay = YCENTER - MESH_FOV * Icosahedron[icosahedron_f[depthMap[i].ID][0]].wy / Icosahedron[icosahedron_f[depthMap[i].ID][0]].wz;
+          bx = XCENTER + MESH_FOV * Icosahedron[icosahedron_f[depthMap[i].ID][1]].wx / Icosahedron[icosahedron_f[depthMap[i].ID][1]].wz;
+          by = YCENTER - MESH_FOV * Icosahedron[icosahedron_f[depthMap[i].ID][1]].wy / Icosahedron[icosahedron_f[depthMap[i].ID][1]].wz;
+          cx = YCENTER + MESH_FOV * Icosahedron[icosahedron_f[depthMap[i].ID][2]].wx / Icosahedron[icosahedron_f[depthMap[i].ID][2]].wz;
+          cy = YCENTER - MESH_FOV * Icosahedron[icosahedron_f[depthMap[i].ID][2]].wy / Icosahedron[icosahedron_f[depthMap[i].ID][2]].wz;
+          
+          if(MESH_WIREFRAME) { 
+            V = map(depthMap[i].depth,depthMap[0].depth,depthMap[MESH_FACES-1].depth,100,255);
+              pSmartMatrix->drawTriangle(ax,ay,bx,by,cx,cy, CRGB(CHSV(baseHue,255,V)));
+              baseHue+=5;
+          } else { 
+            V = map(depthMap[i].depth,depthMap[0].depth,depthMap[MESH_FACES-1].depth,-100,255); // larger "range" as back faces won't be drawn
+            V = constrain(V,0,255);
+            pSmartMatrix->fillTriangle(ax,ay,bx,by,cx,cy, CRGB(CHSV(baseHue,255,V)));
+          }
+         //baseHue+=10;
           
       
   }
-
+cubeHue++;
 }
 
 void drawIcosahedron() { 
@@ -320,6 +327,9 @@ unsigned long handleInput() {
     if(input == IRCODE_A) { 
       autoMode = !autoMode;
     }
+    if(input == IRCODE_B) { 
+      MESH_WIREFRAME = !MESH_WIREFRAME;  
+    }
     if(input == IRCODE_C) { 
       showClock = !showClock;
     }
@@ -376,6 +386,7 @@ void drawCurrentMode() {
 
     }
     if(showClock) { 
+
       if(currentMode != 3) { 
       drawClockBadge();
       }
