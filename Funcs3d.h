@@ -6,6 +6,12 @@ typedef struct {
 	float depth;
 } DepthMap;
 
+typedef struct { 
+	int a;
+	int b;
+	int c;
+} FaceList;
+
 class Point3d
 {
 	public:
@@ -49,10 +55,17 @@ class Matrix3d
 
 };
 
-class Th3dtran
+class Object3D
 {
 public:
-	Th3dtran();
+	Point3d * mesh;
+	int nVertices;
+	int nFaces;
+	FaceList * faces;
+	DepthMap * depthMap;
+	float minDepth;
+	float maxDepth;
+	Object3D(int numVerts, int numFaces);
 	void init();
 	void Translate(float x, float y, float z);
 	void Rotate(float x, float y, float z);
@@ -61,9 +74,11 @@ public:
 	Point3d ChangeObjectPoint(Point3d &p);
 	Point3d getNormal(Point3d a, Point3d b, Point3d c);
 	Point3d Normalize(Point3d V);
-	void sortDepthMap(DepthMap *depthMap, int numFaces);
+	int Render(float Center, float FOV,int faceID, char dir);
+	void sortDepthMap();
+	void ApplyTransforms();
+	void loadMesh(float verts[][3], int faceArray[][3]);
 	Matrix3d matrix, Rmat, rmatrix, objectmatrix;
 	char local;
-
 };
 #endif

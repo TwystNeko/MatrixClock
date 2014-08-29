@@ -62,12 +62,10 @@ timer multiTimer[5];
 IRrecv irReceiver(IR_RECV_CS);
 
 #define MESH_VERTICES 12
-#define MESH_FACES 21
+#define MESH_FACES 20
 #define MESH_FOV 45
 
-Point3d Icosahedron[MESH_VERTICES];
-Point3d Normals[MESH_FACES];
-Th3dtran Transform;
+Object3D Icosa(MESH_VERTICES, MESH_FACES);
 
 bool MESH_WIREFRAME = false;
 
@@ -143,89 +141,53 @@ void setup() {
     return;
   }
   Serial.println("SD OK!");
-  loadMesh();
+  Icosa.loadMesh(icosahedron_v, icosahedron_f);
 
 }
-
-void loadMesh() {
-  // load mesh into the Point3d array. 
-  for(int i = 0; i<MESH_VERTICES;i++) { 
-    Icosahedron[i].lx = icosahedron_v[i][0];
-    Icosahedron[i].ly = icosahedron_v[i][1];
-    Icosahedron[i].lz = icosahedron_v[i][2];
-  }
-}
-
-DepthMap depthMap[MESH_FACES];
-
 
 void transformMesh() { 
-  Transform.Rotate(AngX,AngY,0);
-  Transform.Translate(0,0,-30);
-  Transform.Scale(1);
+  Icosa.Rotate(AngX,AngY,0);
+  Icosa.Translate(0,0,-30);
+  Icosa.Scale(1);
+
+  Icosa.ApplyTransforms();
+  Icosa.sortDepthMap();
   AngX +=.05;
   AngY +=.05;
-  
-  for(int i=0; i<MESH_VERTICES;i++) {
-    Transform.ChangeObjectPoint(Icosahedron[i]);
-   
-    Transform.ChangeLocalObject(Icosahedron[i]);
- 
-  }
+
 }
 
-void drawMesh() { 
+void drawMesh(int Hue) { 
   int ax, ay,bx,by,cy,cx,V,baseHue;
-  baseHue = cubeHue;
-  Point3d N;
-
-  for(int i=0; i<MESH_FACES; i++) { 
-    depthMap[i].depth = (Icosahedron[icosahedron_f[i][0]].az + Icosahedron[icosahedron_f[i][1]].az  + Icosahedron[icosahedron_f[i][2]].az )/3;
-    depthMap[i].ID = i;
-  }
-  Transform.sortDepthMap(depthMap, MESH_FACES);
-
-
+  baseHue = Hue;
   for(int i=0; i<MESH_FACES; i++) {
+    ax = Icosa.Render(XCENTER,MESH_FOV,i,'a');
+    ay = Icosa.Render(YCENTER,MESH_FOV,i,'b');
 
-    
-        // Parallel Projection
-        /*
-          ax = floor(Icosahedron[icosahedron_f[depthMap[i].ID][0]].ax + XCENTER);
-          ay = floor(-Icosahedron[icosahedron_f[depthMap[i].ID][0]].ay + YCENTER);
-          bx = floor(Icosahedron[icosahedron_f[depthMap[i].ID][1]].ax  + XCENTER);
-          by = floor(-Icosahedron[icosahedron_f[depthMap[i].ID][1]].ay  + YCENTER);
-          cx = floor(Icosahedron[icosahedron_f[depthMap[i].ID][2]].ax + XCENTER);
-          cy = floor(-Icosahedron[icosahedron_f[depthMap[i].ID][2]].ay + YCENTER);
-        */
-          // Perspective Projection
-          ax = XCENTER + MESH_FOV * Icosahedron[icosahedron_f[depthMap[i].ID][0]].wx / Icosahedron[icosahedron_f[depthMap[i].ID][0]].wz;
-          ay = YCENTER - MESH_FOV * Icosahedron[icosahedron_f[depthMap[i].ID][0]].wy / Icosahedron[icosahedron_f[depthMap[i].ID][0]].wz;
-          bx = XCENTER + MESH_FOV * Icosahedron[icosahedron_f[depthMap[i].ID][1]].wx / Icosahedron[icosahedron_f[depthMap[i].ID][1]].wz;
-          by = YCENTER - MESH_FOV * Icosahedron[icosahedron_f[depthMap[i].ID][1]].wy / Icosahedron[icosahedron_f[depthMap[i].ID][1]].wz;
-          cx = YCENTER + MESH_FOV * Icosahedron[icosahedron_f[depthMap[i].ID][2]].wx / Icosahedron[icosahedron_f[depthMap[i].ID][2]].wz;
-          cy = YCENTER - MESH_FOV * Icosahedron[icosahedron_f[depthMap[i].ID][2]].wy / Icosahedron[icosahedron_f[depthMap[i].ID][2]].wz;
-          
-          if(MESH_WIREFRAME) { 
-            V = map(depthMap[i].depth,depthMap[0].depth,depthMap[MESH_FACES-1].depth,100,255);
-              pSmartMatrix->drawTriangle(ax,ay,bx,by,cx,cy, CRGB(CHSV(baseHue,255,V)));
-              baseHue+=5;
-          } else { 
-            V = map(depthMap[i].depth,depthMap[0].depth,depthMap[MESH_FACES-1].depth,-100,255); // larger "range" as back faces won't be drawn
-            V = constrain(V,0,255);
-            pSmartMatrix->fillTriangle(ax,ay,bx,by,cx,cy, CRGB(CHSV(baseHue,255,V)));
-          }
-         //baseHue+=10;
-          
-      
+    bx = Icosa.Render(XCENTER,MESH_FOV,i,'c');
+    by = Icosa.Render(YCENTER,MESH_FOV,i,'d');
+
+    cx = Icosa.Render(XCENTER,MESH_FOV,i,'e');
+    cy = Icosa.Render(YCENTER,MESH_FOV,i,'f');
+
+    if(MESH_WIREFRAME) { 
+      V = map(Icosa.depthMap[i].depth,Icosa.minDepth,Icosa.maxDepth,100,255);
+        pSmartMatrix->drawTriangle(ax,ay,bx,by,cx,cy, CRGB(CHSV(baseHue,255,V)));
+        baseHue +=10;
+    } else { 
+      V = map(Icosa.depthMap[i].depth,Icosa.minDepth,Icosa.maxDepth,-100,255); // larger "range" as back faces won't be drawn
+      V = constrain(V,0,255);
+      pSmartMatrix->fillTriangle(ax,ay,bx,by,cx,cy, CRGB(CHSV(baseHue,255,V)));
+      baseHue +=10;
+    }      
   }
-cubeHue++;
 }
 
 void drawIcosahedron() { 
   pSmartMatrix->fillScreen(CRGB(0,0,0));
   transformMesh();
-  drawMesh();
+  drawMesh(cubeHue);
+  cubeHue++;
   nextFrame = millis() + 10;
 }
 

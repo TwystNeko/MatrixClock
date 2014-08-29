@@ -153,7 +153,7 @@ Point3d &Point3d::operator /= ( double V )
 
 
 
-Point3d Th3dtran::getNormal(Point3d a, Point3d b, Point3d c) {
+Point3d Object3D::getNormal(Point3d a, Point3d b, Point3d c) {
   Point3d n;
   Point3d U = (b - a);
   Point3d V = (c - a);
@@ -165,7 +165,7 @@ Point3d Th3dtran::getNormal(Point3d a, Point3d b, Point3d c) {
   return n;
 }
 
-Point3d Th3dtran::Normalize(Point3d V) { 
+Point3d Object3D::Normalize(Point3d V) { 
   Point3d N;
  float length = sqrt((V.lx * V.lx) + (V.ly * V.ly) + (V.lx * V.lz));
   N.lx = V.lx/length;
@@ -174,15 +174,18 @@ Point3d Th3dtran::Normalize(Point3d V) {
   return N;
 }
 
-void Th3dtran::sortDepthMap(DepthMap *depthMap, int numFaces) {
+void Object3D::sortDepthMap() {
   int swapped;
   int i;
   int tempID;
   float tempDepth;
-   
+  for(int i=0; i<nFaces; i++) { 
+    depthMap[i].depth = (mesh[faces[i].a].az + mesh[faces[i].b].az  + mesh[faces[i].c].az )/3;
+    depthMap[i].ID = i;
+  }
   do {
     swapped = 0;
-    for (i = 1; i < numFaces; i++) {
+    for (i = 1; i < this->nFaces; i++) {
       if (depthMap[i-1].depth > depthMap[i].depth) {
         tempID = depthMap[i].ID;
         tempDepth = depthMap[i].depth;
@@ -194,6 +197,24 @@ void Th3dtran::sortDepthMap(DepthMap *depthMap, int numFaces) {
       }
     }
   } while(swapped != 0);
+
+  minDepth = depthMap[0].depth;
+  maxDepth = depthMap[nFaces -1].depth;
+}
+
+void Object3D::loadMesh(float verts[][3], int faceArray[][3]) { 
+  // load vertices into internal array
+  for(int i = 0; i<this->nVertices;i++) { 
+    mesh[i].lx = verts[i][0];
+    mesh[i].ly = verts[i][1];
+    mesh[i].lz = verts[i][2];
+  }
+  // load faces into internal array
+  for(int i=0; i<this->nFaces; i++) { 
+    faces[i].a = faceArray[i][0];
+    faces[i].b = faceArray[i][1];
+    faces[i].c = faceArray[i][2];
+  }
 }
 
 Matrix3d::Matrix3d() 
@@ -246,17 +267,22 @@ void Matrix3d::MatrixMult(Matrix3d &M1, Matrix3d &M2){
   }
 }
 
-Th3dtran::Th3dtran() { 
+Object3D::Object3D(int numVerts, int numFaces) { 
+  mesh = new Point3d[numVerts];
+  depthMap = new DepthMap[numFaces];
+  faces = new FaceList[numFaces];
+  this->nVertices = numVerts;
+  this->nFaces = numFaces;
   init();
   local = 1;
 }
 
-void Th3dtran::init() { 
+void Object3D::init() { 
   matrix.MatrixIdentity();
   objectmatrix.MatrixIdentity();
 }
 
-void Th3dtran::Translate(float x, float y, float z) {
+void Object3D::Translate(float x, float y, float z) {
   Rmat.MatrixIdentity();
   Rmat.Matrix[3][0]=x;
   Rmat.Matrix[3][1]=y;
@@ -268,7 +294,7 @@ void Th3dtran::Translate(float x, float y, float z) {
   }
 }
 
-void Th3dtran::Rotate(float x, float y, float z) { 
+void Object3D::Rotate(float x, float y, float z) { 
   rmatrix.MatrixIdentity();
   Rmat.MatrixIdentity();
   Rmat.Matrix[1][1]=cos(x); Rmat.Matrix[1][2]=sin(x);
@@ -294,7 +320,7 @@ void Th3dtran::Rotate(float x, float y, float z) {
    } 
 }
 
-void Th3dtran::Scale(float scale) {
+void Object3D::Scale(float scale) {
   Rmat.MatrixIdentity();
   Rmat.Matrix[0][0] = scale;
   Rmat.Matrix[1][1] = scale;
@@ -306,7 +332,7 @@ void Th3dtran::Scale(float scale) {
   }
 }
 
-Point3d Th3dtran::ChangeLocalObject(Point3d &p)
+Point3d Object3D::ChangeLocalObject(Point3d &p)
 { 
   p.wx=(long)(p.ax*matrix.Matrix[0][0]+p.ay*matrix.Matrix[1][0]+p.az*matrix.Matrix[2][0]+matrix.Matrix[3][0]);
   p.wy=(long)(p.ax*matrix.Matrix[0][1]+p.ay*matrix.Matrix[1][1]+p.az*matrix.Matrix[2][1]+matrix.Matrix[3][1]);
@@ -314,10 +340,40 @@ Point3d Th3dtran::ChangeLocalObject(Point3d &p)
   return p;
 }
 
-Point3d Th3dtran::ChangeObjectPoint(Point3d &p)
+Point3d Object3D::ChangeObjectPoint(Point3d &p)
 {
   p.ax=(long)(p.lx*objectmatrix.Matrix[0][0]+p.ly*objectmatrix.Matrix[1][0]+(long)p.lz*objectmatrix.Matrix[2][0]+objectmatrix.Matrix[3][0]);
   p.ay=(long)(p.lx*objectmatrix.Matrix[0][1]+p.ly*objectmatrix.Matrix[1][1]+(long)p.lz*objectmatrix.Matrix[2][1]+objectmatrix.Matrix[3][1]);
   p.az=(long)(p.lx*objectmatrix.Matrix[0][2]+p.ly*objectmatrix.Matrix[1][2]+(long)p.lz*objectmatrix.Matrix[2][2]+objectmatrix.Matrix[3][2]);
   return p;
+}
+int Object3D::Render(float Center, float FOV, int faceID, char dir) {
+  int fid = depthMap[faceID].ID;
+  switch(dir) { 
+    case 'a':
+     return Center + FOV * mesh[faces[fid].a].wx / mesh[faces[fid].a].wz;
+    break;
+    case 'b':
+     return Center - FOV * mesh[faces[fid].a].wy / mesh[faces[fid].a].wz;
+    break;
+    case 'c':
+     return Center + FOV * mesh[faces[fid].b].wx / mesh[faces[fid].b].wz;
+    break;
+    case 'd':
+     return Center - FOV * mesh[faces[fid].b].wy / mesh[faces[fid].b].wz;
+    break;
+    case 'e':
+     return Center + FOV * mesh[faces[fid].c].wx / mesh[faces[fid].c].wz;
+    break;
+    case 'f':
+     return Center - FOV * mesh[faces[fid].c].wy / mesh[faces[fid].c].wz;
+    break;
+  }
+}
+
+void Object3D::ApplyTransforms() { 
+  for(int i=0; i<nVertices;i++) {
+    ChangeObjectPoint(mesh[i]);
+    ChangeLocalObject(mesh[i]);
+  }
 }
