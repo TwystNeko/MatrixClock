@@ -347,27 +347,20 @@ Point3d Object3D::ChangeObjectPoint(Point3d &p)
   p.az=(long)(p.lx*objectmatrix.Matrix[0][2]+p.ly*objectmatrix.Matrix[1][2]+(long)p.lz*objectmatrix.Matrix[2][2]+objectmatrix.Matrix[3][2]);
   return p;
 }
-int Object3D::Render(float Center, float FOV, int faceID, char dir) {
+int Object3D::Render(float Center, float FOV, int faceID, char *dir) {
   int fid = depthMap[faceID].ID;
-  switch(dir) { 
-    case 'a':
-     return Center + FOV * mesh[faces[fid].a].wx / mesh[faces[fid].a].wz;
-    break;
-    case 'b':
-     return Center - FOV * mesh[faces[fid].a].wy / mesh[faces[fid].a].wz;
-    break;
-    case 'c':
-     return Center + FOV * mesh[faces[fid].b].wx / mesh[faces[fid].b].wz;
-    break;
-    case 'd':
-     return Center - FOV * mesh[faces[fid].b].wy / mesh[faces[fid].b].wz;
-    break;
-    case 'e':
-     return Center + FOV * mesh[faces[fid].c].wx / mesh[faces[fid].c].wz;
-    break;
-    case 'f':
-     return Center - FOV * mesh[faces[fid].c].wy / mesh[faces[fid].c].wz;
-    break;
+  if(dir == "ax") {
+    return Center + FOV * mesh[faces[fid].a].wx / mesh[faces[fid].a].wz;
+  } else if (dir == "ay"){ 
+    return Center - FOV * mesh[faces[fid].a].wy / mesh[faces[fid].a].wz;
+  } else if (dir == "bx") {
+    return Center + FOV * mesh[faces[fid].b].wx / mesh[faces[fid].b].wz;
+  } else if (dir == "by") {
+    return Center - FOV * mesh[faces[fid].b].wy / mesh[faces[fid].b].wz;
+  } else if (dir == "cx") {
+    return Center + FOV * mesh[faces[fid].c].wx / mesh[faces[fid].c].wz;
+  } else { 
+    return Center - FOV * mesh[faces[fid].c].wy / mesh[faces[fid].c].wz;
   }
 }
 

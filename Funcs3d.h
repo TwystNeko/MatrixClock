@@ -74,7 +74,7 @@ public:
 	Point3d ChangeObjectPoint(Point3d &p);
 	Point3d getNormal(Point3d a, Point3d b, Point3d c);
 	Point3d Normalize(Point3d V);
-	int Render(float Center, float FOV,int faceID, char dir);
+	int Render(float Center, float FOV,int faceID, char *dir);
 	void sortDepthMap();
 	void ApplyTransforms();
 	void loadMesh(float verts[][3], int faceArray[][3]);

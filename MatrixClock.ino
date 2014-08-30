@@ -161,14 +161,14 @@ void drawMesh(int Hue) {
   int ax, ay,bx,by,cy,cx,V,baseHue;
   baseHue = Hue;
   for(int i=0; i<MESH_FACES; i++) {
-    ax = Icosa.Render(XCENTER,MESH_FOV,i,'a');
-    ay = Icosa.Render(YCENTER,MESH_FOV,i,'b');
+    ax = Icosa.Render(XCENTER,MESH_FOV,i,"ax");
+    ay = Icosa.Render(YCENTER,MESH_FOV,i,"ay");
 
-    bx = Icosa.Render(XCENTER,MESH_FOV,i,'c');
-    by = Icosa.Render(YCENTER,MESH_FOV,i,'d');
+    bx = Icosa.Render(XCENTER,MESH_FOV,i,"bx");
+    by = Icosa.Render(YCENTER,MESH_FOV,i,"by");
 
-    cx = Icosa.Render(XCENTER,MESH_FOV,i,'e');
-    cy = Icosa.Render(YCENTER,MESH_FOV,i,'f');
+    cx = Icosa.Render(XCENTER,MESH_FOV,i,"cx");
+    cy = Icosa.Render(YCENTER,MESH_FOV,i,"cy");
 
     if(MESH_WIREFRAME) { 
       V = map(Icosa.depthMap[i].depth,Icosa.minDepth,Icosa.maxDepth,100,255);
